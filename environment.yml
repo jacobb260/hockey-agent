@@ -1,0 +1,19 @@
+name: hockey-agent
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - requests
+      - pandas
+      - numpy
+      - pyarrow
+      - hopsworks
+      - scikit-learn
+      - pydantic
+      - python-dotenv
+      - jupyterlab
+      - matplotlib
+      - google-generativeai
+      - google-auth
