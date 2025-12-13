@@ -28,10 +28,17 @@ class Settings:
         )
 
         # NHL API
-        self.NHL_API_BASE_URL = self._get_env(
-            "NHL_API_BASE_URL",
-            "https://statsapi.web.nhl.com/api/v1",
+        self.NHL_STATS_BASE_URL = self._get_env(
+            "NHL_STATS_BASE_URL",
+            "https://api.nhle.com/stats/rest",
         )
+
+        self.NHL_WEB_BASE_URL = self._get_env(
+            "NHL_WEB_BASE_URL",
+            "https://api-web.nhle.com",
+        )
+
+        
         
 
     @staticmethod

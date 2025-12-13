@@ -17,3 +17,4 @@ dependencies:
       - matplotlib
       - google-generativeai
       - google-auth
+      - confluent-kafka
