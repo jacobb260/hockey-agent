@@ -1,8 +1,7 @@
 import os
 import sys
 from pathlib import Path
-import os
-from dotenv import load_dotenv
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import google.generativeai as genai
 import json
 import pandas as pd
@@ -14,37 +13,9 @@ import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
-#load_dotenv()
-
 from config import settings
-import hopsworks
+from agentFunctions import agentFunctions
 
-def hopsworks_features():
-    project = hopsworks.login(
-        project=settings.HOPSWORKS_PROJECT,
-        api_key_value=settings.HOPSWORKS_API_KEY,
-        host=settings.HOPSWORKS_HOST
-    )
-    fs = project.get_feature_store()
-    fg = fs.get_feature_group(
-        name="player_season_stats",
-        version=1
-    )
-    df = fg.read()
-    return df, fs
-
-def top_players(df, position=None, metric="points", n=10):
-    data = df.copy()
-    if position == "F":
-        data = data[data["position_code"].isin(["C", "L", "R"])]
-    elif position:
-        data = data[data["position_code"] == position]
-    data = data[data[metric].notna()]
-    return (
-        data.sort_values(metric, ascending=False)
-            .head(n)
-            [["skater_full_name", "position_code", metric, "games_played"]]
-    )
 
 def extract_json(text):
     """Extract JSON from LLM response, handling markdown and extra text."""
@@ -69,7 +40,7 @@ User question:
 
 Decide which tool to use and return ONLY a JSON object with no markdown formatting, no explanation.
 Example format:
-{{"tool": "top_players", "position": "F", "metric": "points", "n": 5}}
+{{"tool": "get_player_overview", "player_name": "Sidney Crosby" ,season": "20232024"}}
 """
     response = model.generate_content(prompt)
     raw_text = response.text.strip()
@@ -79,21 +50,28 @@ Example format:
     
     return json_text
 
-def run_agent(question: str, df):
+def run_agent(question: str):
     try:
         decision = decide_tool(question)
         print(f"Raw decision: {decision}")
         
         params = json.loads(decision)
         
-        if params["tool"] == "top_players":
-            result = top_players(
-                df,
+        if params["tool"] == "get_player_overview":
+            result = agentFunctions.get_player_overview(
+                player_name = params.get("player_name") ,
+                season=params.get("season"),
+            )
+            return result
+        elif params["tool"] == "top_players":
+            result = agentFunctions.top_players(
+                season= params.get("season"),
                 position=params.get("position"),
                 metric=params.get("metric"),
                 n=params.get("n", 5)
             )
             return result
+            
         else:
             return f"Unknown tool: {params.get('tool')}"
     
@@ -143,9 +121,16 @@ for model in genai.list_models():
 # Tool descriptions
 TOOLS_DESCRIPTION = """
 You can use the following tools, deliver max 150 words:
-1. top_players:
+1. get_player_overview:
+   Use when the user asks for season overview of a player. For example when the user asks "How good is Jesper Fast this season"
+   Or when the user want a comparison of two players
+   Parameters:
+   - player_name: The full (first name and last name) name of the player
+   - season: Which season. The format is YYYYYYYY, 20232024 for example
+2. top_players:
    Use when the user asks for best players, rankings, leaders.
    Parameters:
+   -season: Which season. The format is YYYYYYYY, 20232024 for example
    - position: "F" (forwards), "D" (defensemen), "C" (center), "L" (left wing), "R" (right wing), or null for all
    - metric: one of ["points", "points_per_game", "ev_points", "goals"]
      * "ev_points" means even-strength points (5 mot 5)
@@ -154,13 +139,13 @@ You can use the following tools, deliver max 150 words:
 
 # Main execution
 if __name__ == "__main__":
-    df, fs = hopsworks_features()
     
     # Test question
-    question = "Vilka forwards var bäst i 5 mot 5?"
+    #question = "How good was Sidney Crosby the 2023/2024 season?"
+    question = "Vilka forwards var bäst i 5 mot 5 säsongen 2023/2024?"
     
     # Run the agent
-    result = run_agent(question, df)
+    result = run_agent(question)
     
     if result is not None:
         print("\nResult:")
