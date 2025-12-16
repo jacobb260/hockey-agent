@@ -156,10 +156,11 @@ You can use the following tools for answer questions related to NHL, deliver max
 if __name__ == "__main__":
     
     # Test question
-    #question = "How good was Sidney Crosby the 2023/2024 season?"
+    question = "How good was Sidney Crosby the 2023/2024 season?"
     #question = "Vilka forwards var bäst i 5 mot 5 säsongen 2023/2024?"
     #question = "Vad blir det för väder idag?"
-    question = "Hur många poäng har Colorado Avalanche i NHL 20252026?"
+    #question = "Hur många poäng har Colorado Avalanche i NHL 20252026?"
+
     
     # Run the agent
     result = run_agent(question)

@@ -8,10 +8,6 @@ import pandas as pd
 
 
 class AgentFunctions:
-    """
-    Samlad konfiguration för projektet.
-    Läser värden från miljövariabler (.env).
-    """
 
     def __init__(self) -> None:
        
@@ -22,14 +18,32 @@ class AgentFunctions:
         )
 
         self.fs = self.project.get_feature_store()
+        self.player_season_stats_fg = None
         
 
     def get_player_overview(self, player_name, season):
-        player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
-        data = player_season_stats_fg.filter((player_season_stats_fg.skater_full_name == player_name) &
-                                                (player_season_stats_fg.season_id == season)).read()
+        if self.player_season_stats_fg is None:
+            self.player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
+
+        data =self.player_season_stats_fg.filter((self.player_season_stats_fg.skater_full_name == player_name) &
+                                                (self.player_season_stats_fg.season_id == season)).read()
         #json_str = data.to_json(orient="records")
-        return data
+        cols = [
+            "skater_full_name",
+            "season_id",
+            "games_played",
+            "position_code",
+            "goals",
+            "assists",
+            "points",
+            "points_per_game",
+            "shots",
+            "shooting_pct",
+            "plus_minus",
+            "time_on_ice_per_game",
+        ]
+        
+        return data.loc[:, cols].copy()
     
     def get_team_overview(self, teamName, season):
         """
@@ -43,8 +57,9 @@ class AgentFunctions:
         return data
 
     def top_players(self, season, position=None, metric="points", n=10):
-        player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
-        data = player_season_stats_fg.filter((player_season_stats_fg.season_id == season)).read()
+        if self.player_season_stats_fg is None:
+            self.player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
+        data = self.player_season_stats_fg.filter((self.player_season_stats_fg.season_id == season)).read()
 
         if position == "F":
             data = data[data["position_code"].isin(["C", "L", "R"])]
