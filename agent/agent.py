@@ -101,7 +101,7 @@ User question:
 Data:
 {table_text}
 
-Explain the result in clear hockey terms in Swedish.
+Explain the result in clear hockey terms. Try to be as concise as possible.
 """
     # När du genererar innehåll
     response = model.generate_content(
@@ -130,7 +130,7 @@ for model in genai.list_models():
 """
 # Tool descriptions
 TOOLS_DESCRIPTION = """
-You can use the following tools for answer questions related to NHL, deliver max 300 words:
+You can use the following tools for answer questions related to the NHL
 1. get_player_overview:
    Use when the user asks for season overview of a player. For example when the user asks "How good is Jesper Fast this season"
    Or when the user want a comparison of two players
