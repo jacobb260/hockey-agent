@@ -41,6 +41,8 @@ User question:
 Decide which tool to use and return ONLY a JSON object with no markdown formatting, no explanation.
 Example format:
 {{"tool": "get_player_overview", "player_name": "Sidney Crosby" ,season": "20232024"}}
+If no tools can answer the question, give a brief explantion of why. For example:
+{{"tool": "none", "explanation": "I can only answer questions related to the NHL and not about fotboll."}}
 """
     response = model.generate_content(prompt)
     raw_text = response.text.strip()
@@ -71,6 +73,9 @@ def run_agent(question: str):
                 n=params.get("n", 5)
             )
             return result
+        
+        elif params["tool"] == "none":
+            return params.get("explanation")
             
         else:
             return f"Unknown tool: {params.get('tool')}"
@@ -97,7 +102,7 @@ Explain the result in clear hockey terms in Swedish.
     response = model.generate_content(
         prompt,
         generation_config=genai.types.GenerationConfig(
-            max_output_tokens=200,  # Sätt max antal tokens
+            max_output_tokens=350,  # Sätt max antal tokens
             temperature=0.7,         # Valfritt: kreativitet (0.0-1.0)
             top_p=0.9,              # Valfritt: sampling
             top_k=40                # Valfritt: sampling
@@ -120,7 +125,7 @@ for model in genai.list_models():
 """
 # Tool descriptions
 TOOLS_DESCRIPTION = """
-You can use the following tools, deliver max 150 words:
+You can use the following tools for answer questions related to NHL, deliver max 300 words:
 1. get_player_overview:
    Use when the user asks for season overview of a player. For example when the user asks "How good is Jesper Fast this season"
    Or when the user want a comparison of two players
@@ -142,12 +147,17 @@ if __name__ == "__main__":
     
     # Test question
     #question = "How good was Sidney Crosby the 2023/2024 season?"
-    question = "Vilka forwards var bäst i 5 mot 5 säsongen 2023/2024?"
+    #question = "Vilka forwards var bäst i 5 mot 5 säsongen 2023/2024?"
+    question = "Vad blir det för väder idag?"
     
     # Run the agent
     result = run_agent(question)
     
-    if result is not None:
+    #If no tool could be used
+    if type(result) is str:
+        print(result)
+
+    elif result is not None:
         print("\nResult:")
         print(result)
         
