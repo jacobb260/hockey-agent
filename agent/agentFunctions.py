@@ -31,6 +31,17 @@ class AgentFunctions:
         #json_str = data.to_json(orient="records")
         return data
     
+    def get_team_overview(self, teamName, season):
+        """
+        Hämtar alla tillgängliga stats för ett lag under en viss säsong.
+        """
+        teams_fg = self.fs.get_feature_group(name='teams', version=1)
+        data = teams_fg.filter(
+            (teams_fg.team_name == teamName) &
+            (teams_fg.season_id == season)
+        ).read()
+        return data
+
     def top_players(self, season, position=None, metric="points", n=10):
         player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
         data = player_season_stats_fg.filter((player_season_stats_fg.season_id == season)).read()

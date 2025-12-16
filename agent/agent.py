@@ -73,7 +73,12 @@ def run_agent(question: str):
                 n=params.get("n", 5)
             )
             return result
-        
+        elif params["tool"] == "get_team_overview":
+            result = agentFunctions.get_team_overview(
+                teamName=params.get("teamName"),
+                season=params.get("season")
+            )
+            return result
         elif params["tool"] == "none":
             return params.get("explanation")
             
@@ -140,6 +145,11 @@ You can use the following tools for answer questions related to NHL, deliver max
    - metric: one of ["points", "points_per_game", "ev_points", "goals"]
      * "ev_points" means even-strength points (5 mot 5)
    - n: number of players to return
+3. get_team_overview:
+   Use when the user asks NHL team related questions.
+   Parameters:
+   -teamName: The full name of the team.
+   -season: Which season. The format is YYYYYYYY, 20232024 for example
 """
 
 # Main execution
@@ -148,7 +158,8 @@ if __name__ == "__main__":
     # Test question
     #question = "How good was Sidney Crosby the 2023/2024 season?"
     #question = "Vilka forwards var bäst i 5 mot 5 säsongen 2023/2024?"
-    question = "Vad blir det för väder idag?"
+    #question = "Vad blir det för väder idag?"
+    question = "Hur många poäng har Colorado Avalanche i NHL 20252026?"
     
     # Run the agent
     result = run_agent(question)
