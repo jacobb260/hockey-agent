@@ -18,3 +18,5 @@ dependencies:
       - google-generativeai
       - google-auth
       - confluent-kafka
+      - gradio
+      - tabulate
