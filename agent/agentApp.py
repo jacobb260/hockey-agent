@@ -11,6 +11,7 @@ import io
 from config import settings
 from agentFunctions import agentFunctions
 import gradio as gr
+import datetime
 
 # Sätt UTF-8 encoding för stdout/stderr
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -83,11 +84,17 @@ def decide_tool(question: str, history_text: str = ""):
     if history_text:
         conversation_context = f"\nConversation history:\n{history_text}\n"
     
+    today = datetime.date.today()
+    today = str(today)
     prompt = f"""
     You are a hockey data assistant.
     {TOOLS_DESCRIPTION}
     {conversation_context}
-    
+    Todays date is : {today}
+    If the user doesnt ask for a specific season, use todays date to decide which season to use. If the month is 
+    October or later (i.e., month ≥ 10), the season is the current year and next year. If the month is before October 
+    (i.e., month < 10), the season is the previous year current year. You only have stats for the regular season, not the playoffs.
+
     User question:
     "{question}"
     
@@ -100,8 +107,8 @@ def decide_tool(question: str, history_text: str = ""):
     Return ONLY a JSON object with no markdown formatting, no explanation.
     
     Example formats:
-    Single tool: {{"tool": "get_player_overview", "player_name": "Sidney Crosby", "season": "20232024"}}
-    Multiple tools: {{"tools": [{{"tool": "get_player_overview", "player_name": "Sidney Crosby", "season": "20232024"}}, {{"tool": "get_player_overview", "player_name": "Connor McDavid", "season": "20232024"}}]}}    
+    Single tool: {{"tool": "get_player_overview", "player_name": "Sidney Crosby", "season": "20252026"}}
+    Multiple tools: {{"tools": [{{"tool": "get_player_overview", "player_name": "Sidney Crosby", "season": "20252026"}}, {{"tool": "get_player_overview", "player_name": "Connor McDavid", "season": "20252026"}}]}}    
     No tool: {{"tool": "none", "explanation": "I can only answer questions related to the NHL and not about fotboll."}}
     Enough: {{"tool": "enough", "explanation": "Based on Sidney Crosby and Steven Stamkos data from earlier in the conversation, Sidney Crosby had the better season"}}
     """
@@ -213,14 +220,18 @@ def run_agent(question: str, history_text: str = ""):
         return f"Error: {str(e)}", "text"
 
 def explain_result(question, table_text):
+    today = datetime.date.today()
+    today = str(today)
     prompt = f"""
 User question:
 {question}
 
 Data:
 {table_text}
-
-Explain the result in clear hockey terms. Try to be as concise as possible.
+Explain the result in clear hockey terms. Try to be as concise as possible. The results is for regular season only.
+Todays date is : {today}
+If todays date is before May and the season is the same year as the current, assume the regular season is still ongoing.
+If the season is till ongoing, you don't have to explain how you came to that conclusion.
 """
     response = model.generate_content(
         prompt,
@@ -245,26 +256,26 @@ You can use the following tools for answer questions related to the NHL
    Or when the user want a comparison of two players
    Parameters:
    - player_name: The full (first name and last name) name of the player
-   - season: Which season. The format is YYYYYYYY, 20232024 for example
+   - season: Which season. The format is YYYYYYYY, 20252026 for example
 2. top_players:
    Use when the user asks for best players, rankings, leaders.
    Parameters:
-   -season: Which season. The format is YYYYYYYY, 20232024 for example
+   -season: Which season. The format is YYYYYYYY, 20252026 for example
    - position: "F" (forwards), "D" (defensemen), "C" (center), "L" (left wing), "R" (right wing), or null for all
-   - metric: one of ["points", "points_per_game", "ev_points", "goals"]
+   - metric: one of ["points", "points_per_game", "ev_points", "goals", "assists", "penalty_minutes", "plus_minus", "time_on_ice_per_game"]
      * "ev_points" means even-strength points (5 mot 5)
    - n: number of players to return
 3. get_team_overview:
    Use when the user asks NHL team related questions.
    Parameters:
    -teamName: The full name of the team.
-   -season: Which season. The format is YYYYYYYY, 20232024 for example
+   -season: Which season. The format is YYYYYYYY, 20252026 for example
 4. get_goalie:
    Use when the user asks for goalie statistics for a season, goalie comparisons,
    or questions like "Who are the best goalies this season?"
    Parameters:
    - goalie_full_name: The full (first name and last name) name of the player
-   - season: Which season. The format is YYYYYYYY, 20232024 for example
+   - season: Which season. The format is YYYYYYYY, 20252026 for example
 """
 
 def history_to_text(history, max_turns=6):
