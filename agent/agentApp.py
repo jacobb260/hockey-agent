@@ -102,18 +102,16 @@ def decide_tool(question: str, previous_results: list = None, history_text: str 
     Decide which tool(s) to use. You can return:
     1. A single tool call
     2. Multiple tool calls (as a list) if the question requires data from multiple sources
-    3. "done" if previous results are sufficient to answer the question
-    4. "none" if no tools can help (or if you can answer from conversation history)
-    5. "enough" if the chat history contains the information needed for answering a question
+    3. "none" if no tools can help
+    4. "enough" if the chat history contains the information needed for answering a question
     
     Return ONLY a JSON object with no markdown formatting, no explanation.
     
     Example formats:
     Single tool: {{"tool": "get_player_overview", "player_name": "Sidney Crosby", "season": "20232024"}}
     Multiple tools: {{"tools": [{{"tool": "get_player_overview", "player_name": "Sidney Crosby", "season": "20232024"}}, {{"tool": "get_player_overview", "player_name": "Connor McDavid", "season": "20232024"}}]}}    
-    Done: {{"tool": "done", "explanation": "Previous results contain all needed information"}}
     No tool: {{"tool": "none", "explanation": "I can only answer questions related to the NHL and not about fotboll."}}
-    Enough, answer with chat history: {{"tool": "enough", "explanation": "Based on Sidney Crosby and Steven Stamkos data from earlier in the conversation, Sidney Crosby had the better season"}}
+    Enough: {{"tool": "enough", "explanation": "Based on Sidney Crosby and Steven Stamkos data from earlier in the conversation, Sidney Crosby had the better season"}}
     """
     
     response = model.generate_content(prompt)
@@ -187,7 +185,7 @@ def run_agent(question: str, history_text: str = ""):
                 })
         
         # Handle single tool
-        elif "tool" in params and params.get("tool") not in ["done", "none", "enough"]:
+        elif "tool" in params and params.get("tool") not in ["none", "enough"]:
             tool_name = params["tool"]
             tool_params = {k: v for k, v in params.items() if k != "tool"}
             
