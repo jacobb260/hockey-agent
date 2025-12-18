@@ -31,6 +31,7 @@ class AgentFunctions:
         cols = [
             "skater_full_name",
             "season_id",
+            "team_abbrevs",
             "games_played",
             "position_code",
             "goals",
