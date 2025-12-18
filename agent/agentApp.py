@@ -134,6 +134,11 @@ def execute_tool(tool_name: str, params: dict):
             teamName=params.get("teamName"),
             season=params.get("season")
         )
+    elif tool_name == "get_goalie":
+        return agentFunctions.get_goalie(
+            name=params.get("goalie_full_name"),
+            season=params.get("season")
+        )
     else:
         return f"Unknown tool: {tool_name}"
 
@@ -254,6 +259,12 @@ You can use the following tools for answer questions related to the NHL
    Parameters:
    -teamName: The full name of the team.
    -season: Which season. The format is YYYYYYYY, 20232024 for example
+4. get_goalie:
+   Use when the user asks for goalie statistics for a season, goalie comparisons,
+   or questions like "Who are the best goalies this season?"
+   Parameters:
+   - goalie_full_name: The full (first name and last name) name of the player
+   - season: Which season. The format is YYYYYYYY, 20232024 for example
 """
 
 def history_to_text(history, max_turns=6):

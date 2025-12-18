@@ -71,7 +71,41 @@ class AgentFunctions:
                 .head(n)
                 [["skater_full_name", "position_code", metric, "games_played"]]
         )
+    def get_goalie(self, name, season):
+        """
+        Returns a goalie's stats for a given season.
+        """
+        if not hasattr(self, "goalies_fg") or self.goalies_fg is None:
+            self.goalies_fg = self.fs.get_feature_group(
+                name="goalies",
+                version=1
+            )
 
+        data = (
+            self.goalies_fg
+            .filter(
+                (self.goalies_fg.goalie_full_name == name) &
+                (self.goalies_fg.season_id == season)
+            )
+            .read()
+        )
+
+        cols = [
+            "goalie_full_name",
+            "season_id",
+            "games_played",
+            "wins",
+            "losses",
+            "save_pct",
+            "goals_against_average",
+            "shots_against",
+            "goals_against",
+            "time_on_ice",
+        ]
+
+        cols = [c for c in cols if c in data.columns]
+
+        return data.loc[:, cols].copy()
 
 # Global instans som du kan importera överallt 
 agentFunctions = AgentFunctions()
