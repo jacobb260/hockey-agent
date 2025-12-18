@@ -1,0 +1,37 @@
+name: daily stats
+
+on:
+  schedule:
+    - cron: "11 6 * * *" 
+  workflow_dispatch:      
+
+jobs:
+  run-notebook:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      - name: Run notebook
+        env:
+          # Sätt dessa som GitHub Secrets (se steg 2)
+          HOPSWORKS_PROJECT: ${{ secrets.HOPSWORKS_PROJECT }}
+          HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+          HOPSWORKS_HOST: ${{ secrets.HOPSWORKS_HOST }}
+          NHL_STATS_BASE_URL: ${{ secrets.NHL_STATS_BASE_URL }}
+          TZ: Europe/Stockholm
+        run: |
+          jupyter nbconvert --to notebook --execute notebooks/player_stats_pipeline.ipynb \
+            --output executed_player_stats_pipeline.ipynb
