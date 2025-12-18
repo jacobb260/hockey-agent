@@ -15,7 +15,7 @@ class Settings:
     def __init__(self) -> None:
        
         # LLM / Gemini
-        self.GOOGLE_API_KEY = self._get_env("GOOGLE_API_KEY")
+        self.GOOGLE_API_KEY = self._get_env("GOOGLE_API_KEY", "none",)
         #self.GEMINI_MODEL_NAME = self._get_env("GEMINI_MODEL_NAME", "gemini-1.5-pro")
         # Hopsworks
         self.HOPSWORKS_API_KEY = self._get_env("HOPSWORKS_API_KEY")
