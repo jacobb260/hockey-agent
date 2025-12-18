@@ -69,7 +69,7 @@ def extract_json(text: str) -> str:
     
     return text[start:end]
 
-def decide_tool(question: str, previous_results: list = None, history_text: str = ""):
+def decide_tool(question: str, history_text: str = ""):
     """
     Decide which tool(s) to use based on the question and previous results.
     
@@ -78,13 +78,6 @@ def decide_tool(question: str, previous_results: list = None, history_text: str 
         previous_results: List of previous tool calls and their results
         history_text: Previous conversation history
     """
-    previous_context = ""
-    if previous_results:
-        previous_context = "\nPrevious tool calls and results:\n"
-        for i, result in enumerate(previous_results, 1):
-            previous_context += f"{i}. Tool: {result['tool']}, Params: {result['params']}\n"
-            previous_context += f"   Result summary: {str(result['result'])[:200]}...\n"
-    print("Previous context:",previous_context)
     print()
     conversation_context = ""
     if history_text:
@@ -94,7 +87,6 @@ def decide_tool(question: str, previous_results: list = None, history_text: str 
     You are a hockey data assistant.
     {TOOLS_DESCRIPTION}
     {conversation_context}
-    {previous_context}
     
     User question:
     "{question}"
@@ -158,7 +150,7 @@ def run_agent(question: str, history_text: str = ""):
     previous_results = []
     
     try:
-        decision = decide_tool(question, previous_results, history_text)
+        decision = decide_tool(question, history_text)
         print(f"Raw decision: {decision}")
         
         params = json.loads(decision)
