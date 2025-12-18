@@ -51,10 +51,29 @@ class AgentFunctions:
         """
         teams_fg = self.fs.get_feature_group(name='teams', version=1)
         data = teams_fg.filter(
-            (teams_fg.team_name == teamName) &
+            (teams_fg.team_full_name == teamName) &
             (teams_fg.season_id == season)
         ).read()
-        return data
+        
+        # De viktigaste kolumnerna för team overview
+        key_cols = [
+            "team_full_name",
+            "season_id",
+            "games_played",
+            "wins",
+            "losses",
+            "ot_losses",
+            "points",
+            "goals_for",
+            "goals_against",
+            "power_play_pct",
+            "penalty_kill_pct",
+        ]
+        
+        # Filtrera bara de kolumner som finns i data
+        available_cols = [col for col in key_cols if col in data.columns]
+        
+        return data.loc[:, available_cols].copy()
 
     def top_players(self, season, position=None, metric="points", n=10):
         if self.player_season_stats_fg is None:
