@@ -102,7 +102,7 @@ def decide_tool(question: str, previous_results: list = None, history_text: str 
     Decide which tool(s) to use. You can return:
     1. A single tool call
     2. Multiple tool calls (as a list) if the question requires data from multiple sources
-    3. "none" if no tools can help
+    3. "none" if no tools can help, you have to giva an explanation of why
     4. "enough" if the chat history contains the information needed for answering a question
     
     Return ONLY a JSON object with no markdown formatting, no explanation.
