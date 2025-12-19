@@ -43,7 +43,12 @@ class AgentFunctions:
             "plus_minus",
             "time_on_ice_per_game",
         ]
+        data_to_return = data.loc[:, cols].copy()
         
+        if len(data_to_return) == 0: # Here's a case where the user probably searches for a goalie.
+            print("Calling get goalie", player_name)
+            return self.get_goalie(player_name, season)
+            
         return data.loc[:, cols].copy()
     
     def get_team_overview(self, teamName, season):
@@ -112,6 +117,7 @@ class AgentFunctions:
 
         cols = [
             "goalie_full_name",
+            "team_abbrevs",
             "season_id",
             "games_played",
             "wins",
