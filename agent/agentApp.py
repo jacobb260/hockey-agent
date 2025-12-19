@@ -230,8 +230,6 @@ Data:
 {table_text}
 Explain the result in clear hockey terms. Try to be as concise as possible. The results is for regular season only.
 Todays date is : {today}
-If todays date is before May and the season is the same year as the current, assume the regular season is still ongoing.
-If the season is till ongoing, you don't have to explain how you came to that conclusion.
 """
     response = model.generate_content(
         prompt,
