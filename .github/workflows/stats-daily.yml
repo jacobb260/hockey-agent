@@ -35,3 +35,5 @@ jobs:
         run: |
           jupyter nbconvert --to notebook --execute notebooks/player_stats_pipeline.ipynb \
             --output executed_player_stats_pipeline.ipynb
+          jupyter nbconvert --to notebook --execute notebooks/teams_pipeline.ipynb \
+            --output executed_teams_pipeline.ipynb
