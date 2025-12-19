@@ -269,8 +269,7 @@ You can use the following tools for answer questions related to the NHL
    -teamName: The full name of the team.
    -season: Which season. The format is YYYYYYYY, 20252026 for example
 4. get_goalie:
-   Use when the user asks for goalie statistics for a season, goalie comparisons,
-   or questions like "Who are the best goalies this season?"
+   Use when the user asks for goalie statistics for a season or goalie comparisons.
    Parameters:
    - goalie_full_name: The full (first name and last name) name of the player
    - season: Which season. The format is YYYYYYYY, 20252026 for example

@@ -44,12 +44,16 @@ class AgentFunctions:
             "time_on_ice_per_game",
         ]
         data_to_return = data.loc[:, cols].copy()
-        
+        data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())       
+        data_to_return = data_to_return.rename(columns={
+            "Time On Ice Per Game": "Time On Ice Per Game (sec)",
+        })
+
         if len(data_to_return) == 0: # Here's a case where the user probably searches for a goalie.
             print("Calling get goalie", player_name)
             return self.get_goalie(player_name, season)
             
-        return data.loc[:, cols].copy()
+        return data_to_return
     
     def get_team_overview(self, teamName, season):
         """
@@ -78,8 +82,9 @@ class AgentFunctions:
         
         # Filtrera bara de kolumner som finns i data
         available_cols = [col for col in key_cols if col in data.columns]
-        
-        return data.loc[:, available_cols].copy()
+        data_to_return = data.loc[:, available_cols].copy()
+        data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())  
+        return data_to_return
 
     def top_players(self, season, position=None, metric="points", n=10):
         if self.player_season_stats_fg is None:
@@ -91,11 +96,10 @@ class AgentFunctions:
         elif position:
             data = data[data["position_code"] == position]
         data = data[data[metric].notna()]
-        return (
-            data.sort_values(metric, ascending=False)
-                .head(n)
-                [["skater_full_name", "position_code", metric, "games_played"]]
-        )
+        data = data.sort_values(metric, ascending=False).head(n)[["skater_full_name", "position_code", metric, "games_played"]]
+        data.columns = (data.columns.str.replace("_", " ", regex=False).str.title())
+        return data
+        
     def get_goalie(self, name, season):
         """
         Returns a goalie's stats for a given season.
@@ -131,7 +135,12 @@ class AgentFunctions:
 
         cols = [c for c in cols if c in data.columns]
 
-        return data.loc[:, cols].copy()
+        data_to_return = data.loc[:, cols].copy()
+        data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title()) 
+        data_to_return = data_to_return.rename(columns={
+            "Time On Ice": "Time On Ice (sec)",
+        }) 
+        return data_to_return
 
 # Global instans som du kan importera överallt 
 agentFunctions = AgentFunctions()
