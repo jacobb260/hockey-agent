@@ -195,7 +195,7 @@ def run_agent(question: str, history_text: str = ""):
             
             print(f"  Calling {tool_name} with params: {tool_params}")
             result = execute_tool(tool_name, tool_params)
-            
+            print("RESULT:", result)
             previous_results.append({
                 "tool": tool_name,
                 "params": tool_params,
