@@ -165,6 +165,18 @@ def execute_tool(tool_name: str, params: dict):
             season=params.get("season"),
             n=params.get("n", 5)
         )
+    elif tool_name == "get_player_form":
+        return agentFunctions.get_player_form(
+            player_name=params.get("player_name"),
+            season=params.get("season"),
+            n=params.get("n", 5)
+        )
+    elif tool_name == "get_goalie_form":
+        return agentFunctions.get_goalie_form(
+            goalie_name=params.get("player_name"),
+            season=params.get("season"),
+            n=params.get("n", 5)
+        )
     else:
         return f"Unknown tool: {tool_name}"
 
@@ -310,6 +322,20 @@ You can use the following tools for answer questions related to the NHL
    - team_name: The full name of the team
    - season: Which season. The format is YYYYYYYY, 20252026 for example
    - n: number of recent games to analyze (default: 5)
+8. get_player_form:
+   Use when the user asks about a player's recent performance, last games, hot/cold streak, or recent goals/assists.
+   Examples: "How has Connor McDavid been playing lately?", "Show me Auston Matthews last 5 games"
+   Parameters:
+   - player_name: The full (first name and last name) name of the player
+   - season: Which season. The format is YYYYYYYY, 20252026 for example
+   - n: number of recent games to analyze (default: 5)
+9. get_goalie_form:
+    Use when the user asks about a goalie's recent performance, last games, hot/cold streak.
+    Example: "How has Jesper Wallstedt been playing lately"
+    Parameters:
+    - player_name: The full (first name and last name) name of the player
+    - season: Which season. The format is YYYYYYYY, 20252026 for example
+    - n: number of recent games to analyze (default: 5)
 """
 
 def history_to_text(history, max_turns=6):
@@ -412,6 +438,8 @@ demo = gr.ChatInterface(
     "Top 10 defensemen by points",
     "Top 5 goalies by save percentage in the 2023/2024 season",
     "Which teams had the most points the 2023/2024 season?",
+    "How has Connor McDavid been playing lately?",  
+    "Show me Auston Matthews last 5 games",
     ],
 )
 

@@ -252,6 +252,181 @@ class AgentFunctions:
         matches_df = matches_df.iloc[::-1] #Reverse it so it's correct order.
         return summary, matches_df
 
+    def get_player_form(self, player_name, season, n=5):
+        """
+        Hämtar en spelares n senaste matcher med mål, assists, poäng etc.
+        
+        Args:
+            player_name: Spelarens fullständiga namn
+            season: Säsong i format YYYYYYYY (t.ex. "20232024")
+            n: Antal senaste matcher att hämta (default: 5)
+        
+        Returns:
+            DataFrame med matchstatistik
+        """
+        # Hämta feature group med per-match data
+        if not hasattr(self, "player_game_log_fg") or self.player_game_log_fg is None:
+            self.player_game_log_fg = self.fs.get_feature_group(
+                name="players_form",
+                version=1
+            )
+        
+        # Filtrera på spelare och säsong
+        data = self.player_game_log_fg.filter(
+            (self.player_game_log_fg.skater_full_name == player_name) &
+            (self.player_game_log_fg.season_id == season)
+        ).read()
+
+        # Konvertera game_date till datetime och filtrera upp till idag
+        data["game_date"] = pd.to_datetime(data["game_date"])
+        today = pd.Timestamp.now().normalize()
+        data = data[data["game_date"] <= today]
+        
+        if data.empty:
+            return pd.DataFrame({
+                "Message": [f"No games played yet for {player_name} in season {season}"]
+            })
+        
+        # Sortera på datum och ta n senaste
+        data = data.sort_values("game_date", ascending=False).head(n)
+        
+        # Välj och formatera kolumner
+        cols = [
+            "game_date",
+            "opponent_team_abbrev",
+            "home_road",
+            "goals",
+            "assists",
+            "points",
+            "shots",
+            "plus_minus",
+            "time_on_ice_per_game",
+            "pp_points",
+            "ev_points"
+        ]
+        
+        # Filtrera bara kolumner som finns
+        available_cols = [col for col in cols if col in data.columns]
+        data_to_return = data[available_cols].copy()
+        
+        # Formatera kolumnnamn
+        data_to_return.columns = (
+            data_to_return.columns
+            .str.replace("_", " ", regex=False)
+            .str.title()
+        )
+        
+        # Specifika ombenämningar
+        rename_dict = {
+            "Time On Ice Per Game": "TOI",
+            "Opponent Team Abbrev": "Opponent",
+            "Home Road": "H/A",
+            "Plus Minus": "+/-",
+            "Pp Points": "PP Pts",
+            "Ev Points": "EV Pts"
+        }
+        
+        data_to_return = data_to_return.rename(columns=rename_dict)
+        
+        # Formatera datum till enbart datum (inte datetime)
+        if "Game Date" in data_to_return.columns:
+            data_to_return["Game Date"] = data_to_return["Game Date"].dt.date
+        
+        return data_to_return
+
+    def get_goalie_form(self, goalie_name, season, n=5):
+        """
+        Hämtar en målvakts n senaste matcher med saves, GAA, save%, etc.
+        
+        Args:
+            goalie_name: Målvaktens fullständiga namn
+            season: Säsong i format YYYYYYYY (t.ex. "20232024")
+            n: Antal senaste matcher att hämta (default: 5)
+        
+        Returns:
+            DataFrame med matchstatistik
+        """
+        # Hämta feature group med per-match data
+        if not hasattr(self, "goalie_game_log_fg") or self.goalie_game_log_fg is None:
+            self.goalie_game_log_fg = self.fs.get_feature_group(
+                name="goalies_form",
+                version=1
+            )
+        
+        # Filtrera på målvakt och säsong
+        data = self.goalie_game_log_fg.filter(
+            (self.goalie_game_log_fg.goalie_full_name == goalie_name) &
+            (self.goalie_game_log_fg.season_id == season)
+        ).read()
+                
+        if data.empty:
+            return pd.DataFrame({
+                "Message": [f"No game data found for {goalie_name} in season {season}"]
+            })
+        
+        # Konvertera game_date till datetime och filtrera upp till idag
+        data["game_date"] = pd.to_datetime(data["game_date"])
+        today = pd.Timestamp.now().normalize()
+        data = data[data["game_date"] <= today]
+        
+        if data.empty:
+            return pd.DataFrame({
+                "Message": [f"No games played yet for {goalie_name} in season {season}"]
+            })
+        
+        # Sortera på datum och ta n senaste
+        data = data.sort_values("game_date", ascending=False).head(n)
+        
+        # Välj och formatera kolumner för målvakter
+        cols = [
+            "game_date",
+            "opponent_team_abbrev",
+            "home_road",
+            "decision",  # W, L, OT
+            "saves",
+            "shots_against",
+            "goals_against",
+            "save_pct",
+            "goals_against_average",
+            "time_on_ice"
+        ]
+        
+        # Filtrera bara kolumner som finns
+        available_cols = [col for col in cols if col in data.columns]
+        data_to_return = data[available_cols].copy()
+        
+        # Formatera kolumnnamn
+        data_to_return.columns = (
+            data_to_return.columns
+            .str.replace("_", " ", regex=False)
+            .str.title()
+        )
+        
+        # Specifika ombenämningar
+        rename_dict = {
+            "Opponent Team Abbrev": "Opponent",
+            "Home Road": "H/A",
+            "Save Pct": "SV%",
+            "Goals Against Average": "GAA",
+            "Shots Against": "SA",
+            "Goals Against": "GA",
+            "Time On Ice": "TOI"
+        }
+        
+        data_to_return = data_to_return.rename(columns=rename_dict)
+        
+        # Formatera datum till enbart datum (inte datetime)
+        if "Game Date" in data_to_return.columns:
+            data_to_return["Game Date"] = data_to_return["Game Date"].dt.date
+        
+        # Formatera SV% och GAA till 3 decimaler
+        if "SV%" in data_to_return.columns:
+            data_to_return["SV%"] = data_to_return["SV%"].round(3)
+        if "GAA" in data_to_return.columns:
+            data_to_return["GAA"] = data_to_return["GAA"].round(2)
+        
+        return data_to_return
+
     def get_goalie(self, name, season):
         """
         Returns a goalie's stats for a given season.
