@@ -18,6 +18,7 @@ class AgentFunctions:
         )
 
         self.fs = self.project.get_feature_store()
+        self.games_fg = None
         self.player_season_stats_fg = None
         
 
@@ -171,7 +172,86 @@ class AgentFunctions:
 
         return data_to_return
 
+    def get_team_form(self, team_name, season, n=5):
+        """
+        Returnerar:
+        1) Ett lags form över de n senaste matcherna
+        2) En tabell med matcherna (datum, motstånd, resultat)
+        """
+        # Hämta feature group på samma sätt som övriga funktioner
+        games_fg = self.fs.get_feature_group(name="matches", version=1)
+        
+        data = games_fg.filter(
+            ((games_fg.home_team_name == team_name) |
+            (games_fg.away_team_name == team_name)) &
+            (games_fg.season == season)
+        ).read()
+
+        # Konvertera datum och filtrera bort framtida matcher
+        data["game_date"] = pd.to_datetime(data["game_date"])
+        today = pd.Timestamp.now().normalize()  # Dagens datum utan tid
+        data = data[data["game_date"] < today]  # Behåll bara matcher upp till idag
     
+        # Sortera på datum och ta n senaste
+        data["game_date"] = pd.to_datetime(data["game_date"])
+        data = data.sort_values("game_date").tail(n)
+
+        points = 0
+        goals_for = 0
+        goals_against = 0
+        wins = 0
+        losses = 0
+
+        matches = []
+
+        for _, row in data.iterrows():
+            if row["home_team_name"] == team_name:
+                gf = row["home_score"]
+                ga = row["visiting_score"]
+                opponent = row["away_team_name"]
+                home_away = "Home"
+            else:
+                gf = row["visiting_score"]
+                ga = row["home_score"]
+                opponent = row["home_team_name"]
+                home_away = "Away"
+
+            goals_for += gf
+            goals_against += ga
+
+            if gf > ga:
+                points += 2
+                wins += 1
+                result = "W"
+            else:
+                losses += 1
+                result = "L"
+
+            matches.append({
+                "Date": row["game_date"].date(),
+                "Opponent": opponent,
+                "Home/Away": home_away,
+                "Result": result,
+                "Score": f"{gf}-{ga}"
+            })
+
+        summary = pd.DataFrame([{
+            "Team": team_name,
+            "Games": len(data),
+            "Wins": wins,
+            "Losses": losses,
+            "Points": points,
+            "Points Per Game": round(points / len(data), 2),
+            "Goals For": goals_for,
+            "Goals Against": goals_against,
+            "Goal Diff": goals_for - goals_against
+        }])
+
+        matches_df = pd.DataFrame(matches)
+
+        matches_df = matches_df.iloc[::-1] #Reverse it so it's correct order.
+        return summary, matches_df
+
     def get_goalie(self, name, season):
         """
         Returns a goalie's stats for a given season.

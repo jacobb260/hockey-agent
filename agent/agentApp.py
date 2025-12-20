@@ -159,6 +159,12 @@ def execute_tool(tool_name: str, params: dict):
             metric=params.get("metric", "points"),
             n=params.get("n", 5)
         )
+    elif tool_name == "get_team_form":
+        return agentFunctions.get_team_form(
+            team_name=params.get("team_name"),
+            season=params.get("season"),
+            n=params.get("n", 5)
+        )
     else:
         return f"Unknown tool: {tool_name}"
 
@@ -170,7 +176,6 @@ def run_agent(question: str, history_text: str = ""):
     Args:
         question: The user's question
         history_text: Previous conversation history
-        max_iterations: Maximum number of tool call iterations to prevent infinite loops
     """
     previous_results = []
     
@@ -185,6 +190,7 @@ def run_agent(question: str, history_text: str = ""):
             return params.get("explanation"), "text"
         if params.get("tool") == "enough":
             return params.get("explanation"), "text"
+        
         # Handle multiple tools
         if "tools" in params:
             print(f"Executing {len(params['tools'])} tools...")
@@ -215,9 +221,8 @@ def run_agent(question: str, history_text: str = ""):
                 "result": result
             })
         
-        # After executing tools, compile results
+        # After executing tools, return the raw results
         if previous_results:
-            # Return the results for formatting
             return previous_results, "data"
         else:
             return "No tools were called to answer the question", "text"
@@ -299,7 +304,12 @@ You can use the following tools for answer questions related to the NHL
    - season: Which season. The format is YYYYYYYY, 20252026 for example
    - metric: one of ["points", "wins", "goals_for", "goals_against", "power_play_pct", "penalty_kill_pct"]
    - n: number of teams to return
-
+7. get_team_form:
+   Use when the user asks about a team's recent form, last games, or winning/losing streak.
+   Parameters:
+   - team_name: The full name of the team
+   - season: Which season. The format is YYYYYYYY, 20252026 for example
+   - n: number of recent games to analyze (default: 5)
 """
 
 def history_to_text(history, max_turns=6):
@@ -346,18 +356,36 @@ def chat_interface(question, history):
             table_texts = []
             
             for r in result:
-                if isinstance(r['result'], pd.DataFrame):
-                    table_md = r['result'].to_markdown(index=False)
+                tool_name = r['tool']
+                tool_result = r['result']
+                
+                # Special handling for get_team_form which returns a tuple of two DataFrames
+                if tool_name == "get_team_form" and isinstance(tool_result, tuple):
+                    summary_df, matches_df = tool_result
+                    
+                    # Create markdown for both tables
+                    table_md = f"**Form Summary:**\n{summary_df.to_markdown(index=False)}\n\n**Recent Matches:**\n{matches_df.to_markdown(index=False)}"
                     all_tables.append(table_md)
-                    table_texts.append(r['result'].to_string(index=False, justify="left"))
+                    
+                    # Create text version for explanation
+                    table_text = f"Summary:\n{summary_df.to_string(index=False)}\n\nMatches:\n{matches_df.to_string(index=False)}"
+                    table_texts.append(table_text)
+                    
+                # Handle regular DataFrame results
+                elif isinstance(tool_result, pd.DataFrame):
+                    table_md = tool_result.to_markdown(index=False)
+                    all_tables.append(table_md)
+                    table_texts.append(tool_result.to_string(index=False, justify="left"))
+                
+                # Handle other results (strings, etc.)
                 else:
-                    all_tables.append(str(r['result']))
-                    table_texts.append(str(r['result']))
+                    all_tables.append(str(tool_result))
+                    table_texts.append(str(tool_result))
             
             # Combine all table texts for explanation
             combined_table_text = "\n\n".join([
-                f"Tool: {r['tool']}\nParameters: {r['params']}\nResult:\n{table_texts[i]}"
-                for i, r in enumerate(result)
+                f"Tool: {result[i]['tool']}\nParameters: {result[i]['params']}\nResult:\n{table_texts[i]}"
+                for i in range(len(result))
             ])
             
             # Get explanation
