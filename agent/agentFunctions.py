@@ -99,7 +99,79 @@ class AgentFunctions:
         data = data.sort_values(metric, ascending=False).head(n)[["skater_full_name", "position_code", metric, "games_played"]]
         data.columns = (data.columns.str.replace("_", " ", regex=False).str.title())
         return data
-        
+    
+    def top_goalies(self, season, metric="save_pct", n=10):
+        """
+        Returnerar topp n målvakter för en säsong baserat på valt metric.
+        """
+        if not hasattr(self, "goalies_fg") or self.goalies_fg is None:
+            self.goalies_fg = self.fs.get_feature_group(
+                name="goalies",
+                version=1
+            )
+
+        data = self.goalies_fg.filter(
+            self.goalies_fg.season_id == season
+        ).read()
+
+        # Ta bort rader utan värde i metric
+        data = data[data[metric].notna()]
+
+        # Sortera (lägre GAA är bättre, annars högre är bättre)
+        ascending = True if metric == "goals_against_average" else False
+        data = data.sort_values(metric, ascending=ascending).head(n)
+
+        cols = [
+            "goalie_full_name",
+            "team_abbrevs",
+            "games_played",
+            metric
+        ]
+        cols = [c for c in cols if c in data.columns]
+
+        data_to_return = data.loc[:, cols].copy()
+        data_to_return.columns = (
+            data_to_return.columns
+            .str.replace("_", " ", regex=False)
+            .str.title()
+        )
+
+        return data_to_return
+
+    def top_teams(self, season, metric="points", n=10):
+        """
+        Returnerar topp n lag för en säsong baserat på valt metric.
+        Exempel på metric: points, wins, goals_for, power_play_pct
+        """
+        teams_fg = self.fs.get_feature_group(
+            name="teams",
+            version=1
+        )
+
+        data = teams_fg.filter(
+            teams_fg.season_id == season
+        ).read()
+
+        data = data[data[metric].notna()]
+        data = data.sort_values(metric, ascending=False).head(n)
+
+        cols = [
+            "team_full_name",
+            "games_played",
+            metric
+        ]
+        cols = [c for c in cols if c in data.columns]
+
+        data_to_return = data.loc[:, cols].copy()
+        data_to_return.columns = (
+            data_to_return.columns
+            .str.replace("_", " ", regex=False)
+            .str.title()
+        )
+
+        return data_to_return
+
+
     def get_goalie(self, name, season):
         """
         Returns a goalie's stats for a given season.

@@ -146,6 +146,19 @@ def execute_tool(tool_name: str, params: dict):
             name=params.get("goalie_full_name"),
             season=params.get("season")
         )
+    elif tool_name == "top_goalies":
+        return agentFunctions.top_goalies(
+            season=params.get("season"),
+            metric=params.get("metric", "save_pct"),
+            n=params.get("n", 5)
+        )
+
+    elif tool_name == "top_teams":
+        return agentFunctions.top_teams(
+            season=params.get("season"),
+            metric=params.get("metric", "points"),
+            n=params.get("n", 5)
+        )
     else:
         return f"Unknown tool: {tool_name}"
 
@@ -273,6 +286,20 @@ You can use the following tools for answer questions related to the NHL
    Parameters:
    - goalie_full_name: The full (first name and last name) name of the player
    - season: Which season. The format is YYYYYYYY, 20252026 for example
+5. top_goalies:
+   Use when the user asks for best goalies, goalie rankings or leaders.
+   Parameters:
+   - season: Which season. The format is YYYYYYYY, 20252026 for example
+   - metric: one of ["save_pct", "wins", "goals_against_average", "shots_against"]
+     * For goals_against_average, lower is better
+   - n: number of goalies to return
+6. top_teams:
+   Use when the user asks for best teams, team rankings or comparisons.
+   Parameters:
+   - season: Which season. The format is YYYYYYYY, 20252026 for example
+   - metric: one of ["points", "wins", "goals_for", "goals_against", "power_play_pct", "penalty_kill_pct"]
+   - n: number of teams to return
+
 """
 
 def history_to_text(history, max_turns=6):
@@ -352,10 +379,11 @@ demo = gr.ChatInterface(
     title="🏒 NHL Assistant",
     description="Ask questions about NHL player statistics. For example: 'Which forwards had the most points the 2023/2024 season?' or 'Who are the top defensemen the 2023/2024 season?' You can also compare players or ask multiple questions at once!",
     examples=[
-        "Which forwards was best in 5 against 5?",
-        "Compare Sidney Crosby and Connor McDavid in the 2023/2024 season",
-        "Top 10 defensemen by points",
-        "How did Erik Karlsson perform compared to Cale Makar in 2023/2024?",
+    "Which forwards was best in 5 against 5?",
+    "Compare Sidney Crosby and Connor McDavid in the 2023/2024 season",
+    "Top 10 defensemen by points",
+    "Top 5 goalies by save percentage in the 2023/2024 season",
+    "Which teams had the most points the 2023/2024 season?",
     ],
 )
 
