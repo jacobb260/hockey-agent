@@ -20,3 +20,4 @@ dependencies:
       - confluent-kafka
       - gradio
       - tabulate
+      - unidecode

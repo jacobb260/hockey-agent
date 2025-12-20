@@ -4,6 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import hopsworks
 from config import settings
 import pandas as pd
+from unidecode import unidecode
 
 
 
@@ -25,6 +26,8 @@ class AgentFunctions:
     def get_player_overview(self, player_name, season):
         if self.player_season_stats_fg is None:
             self.player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
+        
+        player_name = unidecode(player_name) #replace åäö etc with aao 
 
         data =self.player_season_stats_fg.filter((self.player_season_stats_fg.skater_full_name == player_name) &
                                                 (self.player_season_stats_fg.season_id == season)).read()
@@ -270,7 +273,7 @@ class AgentFunctions:
                 name="players_form",
                 version=1
             )
-        
+        player_name = unidecode(player_name) #replace åäö etc with aao
         # Filtrera på spelare och säsong
         data = self.player_game_log_fg.filter(
             (self.player_game_log_fg.skater_full_name == player_name) &
@@ -352,7 +355,7 @@ class AgentFunctions:
                 name="goalies_form",
                 version=1
             )
-        
+        gaolie_name = unidecode(goalie_name) #replace åäö etc with aao
         # Filtrera på målvakt och säsong
         data = self.goalie_game_log_fg.filter(
             (self.goalie_game_log_fg.goalie_full_name == goalie_name) &
@@ -436,6 +439,8 @@ class AgentFunctions:
                 name="goalies",
                 version=1
             )
+
+        name = unidecode(name) #replace åäö etc with aao
 
         data = (
             self.goalies_fg
