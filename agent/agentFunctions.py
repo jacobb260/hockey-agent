@@ -171,7 +171,7 @@ class AgentFunctions:
 
         return data_to_return
 
-
+    
     def get_goalie(self, name, season):
         """
         Returns a goalie's stats for a given season.
