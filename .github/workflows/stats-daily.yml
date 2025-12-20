@@ -39,3 +39,5 @@ jobs:
             --output executed_teams_pipeline.ipynb
           jupyter nbconvert --to notebook --execute notebooks/goalies_pipeline.ipynb \
             --output executed_goalies_pipeline.ipynb
+          jupyter nbconvert --to notebook --execute notebooks/backfill_match_data.ipynb \
+            --output executed_backfill_match_data.ipynb
