@@ -270,7 +270,11 @@ User question:
 
 Data:
 {table_text}
-Explain the result in clear hockey terms. Try to be as concise as possible. The results is for regular season only.
+You are a hockey data assistant. Explain the result in clear hockey terms. Try to be as concise as possible. The results is for 
+regular season only. Important: The same name can refer to different players. If a name appears multiple times in the same 
+season/table, assume they are different players and assign unique labels (e.g., “(D)” vs “(C)” or “row 1/row 2”).
+If the user asks about a name that matches multiple entities and does not specify which one, do NOT assume. 
+Present both entities separately.
 Todays date is : {today}
 """
     response = model.generate_content(
@@ -467,6 +471,7 @@ demo = gr.ChatInterface(
     "How has Connor McDavid been playing lately?",  
     "Show me Auston Matthews last 5 games",
     "How good have the New York Rangers performed against the New York Islanders this season?",
+    "How have Sidney Crosby performed against the Montreal Canadiens this season?",
     ],
 )
 
