@@ -24,6 +24,9 @@ class AgentFunctions:
         
 
     def get_player_overview(self, player_name, season):
+        """
+        Returns a player's stats for a specific season
+        """
         if self.player_season_stats_fg is None:
             self.player_season_stats_fg = self.fs.get_feature_group(name='player_season_stats', version=1)
         
@@ -31,7 +34,7 @@ class AgentFunctions:
 
         data =self.player_season_stats_fg.filter((self.player_season_stats_fg.skater_full_name == player_name) &
                                                 (self.player_season_stats_fg.season_id == season)).read()
-        #json_str = data.to_json(orient="records")
+    
         cols = [
             "skater_full_name",
             "season_id",
@@ -61,7 +64,7 @@ class AgentFunctions:
     
     def get_team_overview(self, teamName, season):
         """
-        Hämtar alla tillgängliga stats för ett lag under en viss säsong.
+        Fetches all available stats for a team during a given season.
         """
         teams_fg = self.fs.get_feature_group(name='teams', version=1)
         data = teams_fg.filter(
@@ -69,7 +72,7 @@ class AgentFunctions:
             (teams_fg.season_id == season)
         ).read()
         
-        # De viktigaste kolumnerna för team overview
+        # The most important columns for a team overview.
         key_cols = [
             "team_full_name",
             "season_id",
@@ -84,7 +87,7 @@ class AgentFunctions:
             "penalty_kill_pct",
         ]
         
-        # Filtrera bara de kolumner som finns i data
+        # Only filter the columns that exist in the data.
         available_cols = [col for col in key_cols if col in data.columns]
         data_to_return = data.loc[:, available_cols].copy()
         data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())  
@@ -106,7 +109,7 @@ class AgentFunctions:
     
     def top_goalies(self, season, metric="save_pct", n=10):
         """
-        Returnerar topp n målvakter för en säsong baserat på valt metric.
+        Returns the top n goalkeepers for a season based on the selected metric.
         """
         if not hasattr(self, "goalies_fg") or self.goalies_fg is None:
             self.goalies_fg = self.fs.get_feature_group(
@@ -118,10 +121,10 @@ class AgentFunctions:
             self.goalies_fg.season_id == season
         ).read()
 
-        # Ta bort rader utan värde i metric
+        # Remove rows with no value in the metric.
         data = data[data[metric].notna()]
 
-        # Sortera (lägre GAA är bättre, annars högre är bättre)
+        # Sort (lower GAA is better; otherwise, higher is better).
         ascending = True if metric == "goals_against_average" else False
         data = data.sort_values(metric, ascending=ascending).head(n)
 
@@ -144,8 +147,8 @@ class AgentFunctions:
 
     def top_teams(self, season, metric="points", n=10):
         """
-        Returnerar topp n lag för en säsong baserat på valt metric.
-        Exempel på metric: points, wins, goals_for, power_play_pct
+        Returns the top n teams for a season based on the selected metric.
+        Example metrics: points, wins, goals_for, power_play_pct.
         """
         teams_fg = self.fs.get_feature_group(
             name="teams",
@@ -182,12 +185,13 @@ class AgentFunctions:
         2) En tabell med matcherna (datum, motstånd, resultat)
         """
         # Hämta feature group på samma sätt som övriga funktioner
-        games_fg = self.fs.get_feature_group(name="matches", version=1)
+        if self.games_fg == None:
+            self.games_fg = self.fs.get_feature_group(name="matches", version=1)
         
-        data = games_fg.filter(
-            ((games_fg.home_team_name == team_name) |
-            (games_fg.away_team_name == team_name)) &
-            (games_fg.season == season)
+        data = self.games_fg.filter(
+            ((self.games_fg.home_team_name == team_name) |
+            (self.games_fg.away_team_name == team_name)) &
+            (self.games_fg.season == season)
         ).read()
 
         # Konvertera datum och filtrera bort framtida matcher
@@ -321,7 +325,7 @@ class AgentFunctions:
         
         # Specifika ombenämningar
         rename_dict = {
-            "Time On Ice Per Game": "TOI",
+            "Time On Ice Per Game": "TOI (sec)",
             "Opponent Team Abbrev": "Opponent",
             "Home Road": "H/A",
             "Plus Minus": "+/-",
@@ -473,8 +477,81 @@ class AgentFunctions:
             "Time On Ice": "Time On Ice (sec)",
         }) 
         return data_to_return
+    
+    def get_game_results(self, team, opponent, season):
+        """
+        returns the game results between two teams for a specific season
+        """
+        if self.games_fg == None:
+            self.games_fg = self.fs.get_feature_group(name="matches", version=1)
+        
+        data = self.games_fg.filter(
+            ((self.games_fg.home_team_name == team) |
+            (self.games_fg.away_team_name == team)) &
+            ((self.games_fg.home_team_name == opponent) |
+            (self.games_fg.away_team_name == opponent)) &
+            (self.games_fg.season == season)
+        ).read()
 
-# Global instans som du kan importera överallt 
+        #Only take the games that have been played
+        data["game_date"] = pd.to_datetime(data["game_date"])
+        today = pd.Timestamp.now().normalize()
+        data = data[data["game_date"] < today]
+        data = data.sort_values("game_date", ascending=True)
+
+        #Have it in the format YYYY-MM-DD
+        data["game_date_str"] = pd.to_datetime(data["game_date"]).dt.strftime("%Y-%m-%d")
+
+        #Which cols to pick
+        cols = ["game_date_str", "season", "home_team_name", "home_score", "visiting_score", "away_team_name"]
+
+        data_to_return = data.loc[:, cols].copy()
+
+        data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())       
+        data_to_return = data_to_return.rename(columns={
+            "Away Team Name": "Visiting Team Name",
+            "Game Date Str": "Game Date",
+        })
+        return data_to_return 
+
+    def get_player_performance_against_team(self, player_name, opponent_team_abbrev, season):
+        """
+        returns the stats of a player against a specific team
+        """
+        if not hasattr(self, "player_game_log_fg") or self.player_game_log_fg is None:
+            self.player_game_log_fg = self.fs.get_feature_group(
+                name="players_form",
+                version=1
+            )
+        player_name = unidecode(player_name) #replace åäö etc with aao
+        
+        data = self.player_game_log_fg.filter(
+            ((self.player_game_log_fg.skater_full_name == player_name)) &
+            ((self.player_game_log_fg.opponent_team_abbrev == opponent_team_abbrev)) &
+            ((self.player_game_log_fg.season_id == season))
+        ).read()
+
+        #Only take the games that have been played
+        data["game_date"] = pd.to_datetime(data["game_date"])
+        today = pd.Timestamp.now().normalize()
+        data = data[data["game_date"] < today]
+        data = data.sort_values("game_date", ascending=True)
+
+        #Have it in the format YYYY-MM-DD
+        data["game_date_str"] = pd.to_datetime(data["game_date"]).dt.strftime("%Y-%m-%d")
+
+        #Which cols to pick
+        cols = ["game_date_str", "opponent_team_abbrev", "assists", "goals", 
+                "game_winning_goals", "penalty_minutes", "plus_minus"]
+        data_to_return = data.loc[:, cols].copy()
+
+        data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())       
+        data_to_return = data_to_return.rename(columns={
+            "Game Date Str": "Game Date",
+        })
+        return data_to_return   
+
+
 agentFunctions = AgentFunctions()
 
     

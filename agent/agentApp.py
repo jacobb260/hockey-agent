@@ -177,6 +177,18 @@ def execute_tool(tool_name: str, params: dict):
             season=params.get("season"),
             n=params.get("n", 5)
         )
+    elif tool_name == "get_game_results":
+        return agentFunctions.get_game_results(
+            team=params.get("team"),
+            opponent=params.get("opponent"),
+            season=params.get("season")
+        )
+    elif tool_name == "get_player_performance_against_team":
+        return agentFunctions.get_player_performance_against_team(
+            player_name=params.get("player_name"),
+            opponent_team_abbrev=params.get("opponent_team_abbrev"),
+            season=params.get("season")
+        )
     else:
         return f"Unknown tool: {tool_name}"
 
@@ -336,6 +348,20 @@ You can use the following tools for answer questions related to the NHL
     - player_name: The full (first name and last name) name of the player
     - season: Which season. The format is YYYYYYYY, 20252026 for example
     - n: number of recent games to analyze (default: 5)
+10. get_game_results:
+    Use when the user asks about the game results between two teams for a season
+    Example: "Give me the results between New York Rangers and New York Islanders the 18/19 season"
+    Parameters:
+    - team: The full name of the team
+    - opponent: The full name of the opponent team
+    - season: Which season. The format is YYYYYYYY, 20252026 for example
+11. get_player_performance_against_team:
+    Use when the user asks about how a player have performed against a team
+    Example: "How has Sidney Crosby performed against New York Rangers this season"
+    Parameters:
+    - player_name: The full (first name and last name) name of the player
+    -  opponent_team_abbrev: The abbrev of the opponent team, NYR for New York Rangers for example
+    - season: Which season. The format is YYYYYYYY, 20252026 for example
 """
 
 def history_to_text(history, max_turns=6):
@@ -440,6 +466,7 @@ demo = gr.ChatInterface(
     "Which teams had the most points the 2023/2024 season?",
     "How has Connor McDavid been playing lately?",  
     "Show me Auston Matthews last 5 games",
+    "How good have the New York Rangers performed against the New York Islanders this season?",
     ],
 )
 
