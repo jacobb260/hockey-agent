@@ -272,7 +272,7 @@ Data:
 {table_text}
 You are a hockey data assistant. Explain the result in clear hockey terms. Try to be as concise as possible. The results is for 
 regular season only. Important: The same name can refer to different players. If a name appears multiple times in the same 
-season/table, assume they are different players and assign unique labels (e.g., “(D)” vs “(C)” or “row 1/row 2”).
+season/table, assume they are different players and assign unique labels (e.g., “(D)” vs “(C)”).
 If the user asks about a name that matches multiple entities and does not specify which one, do NOT assume. 
 Present both entities separately.
 Todays date is : {today}
@@ -432,6 +432,24 @@ def chat_interface(question, history):
                     table_md = tool_result.to_markdown(index=False)
                     all_tables.append(table_md)
                     table_texts.append(tool_result.to_string(index=False, justify="left"))
+                
+                # If we get two or more players with the same name
+                elif (
+                    tool_name in ("get_player_performance_against_team", "get_player_form")
+                    and isinstance(tool_result, list)):
+                    md_tables = []
+                    text_tables = []
+                    for i, dfi in enumerate(tool_result, start=1):
+                        md_tables.append(f"**Player {i}:**\n{dfi.to_markdown(index=False)}")
+                        text_tables.append(f"Player {i}:\n{dfi.to_string(index=False)}")
+
+                    header = "There is more than one player with that name"
+
+                    table_md = header + "\n\n" + "\n\n".join(md_tables)
+                    all_tables.append(table_md)
+                    table_text = header + "\n\n" + "\n\n".join(text_tables)
+                    table_texts.append(table_text)
+
                 
                 # Handle other results (strings, etc.)
                 else:

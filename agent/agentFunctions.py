@@ -270,6 +270,7 @@ class AgentFunctions:
         
         Returns:
             DataFrame med matchstatistik
+            Eller lista med DataFrames med matchstatistik
         """
         # Hämta feature group med per-match data
         if not hasattr(self, "player_game_log_fg") or self.player_game_log_fg is None:
@@ -294,52 +295,119 @@ class AgentFunctions:
                 "Message": [f"No games played yet for {player_name} in season {season}"]
             })
         
-        # Sortera på datum och ta n senaste
-        data = data.sort_values("game_date", ascending=False).head(n)
+        # If more than one player with the same name
+        if data["player_id"].nunique(dropna=False) > 1:
+            player_ids = data["player_id"].unique()
+            data_list = []
+            #split it to a pd frame for each unique player
+            for player_id in player_ids:
+                mask = (data["player_id"] == player_id)
+                player_data = data.loc[mask].copy()
+
+                # Sortera på datum och ta n senaste
+                player_data = player_data.sort_values("game_date", ascending=False).head(n)
+
+                # Välj och formatera kolumner
+                cols = [
+                    "game_date",
+                    "skater_full_name",
+                    "team_abbrev",
+                    "position_code",
+                    "opponent_team_abbrev",
+                    "home_road",
+                    "goals",
+                    "assists",
+                    "points",
+                    "shots",
+                    "plus_minus",
+                    "time_on_ice_per_game",
+                    "pp_points",
+                    "ev_points"
+                ]
+                
+                # Filtrera bara kolumner som finns
+                available_cols = [col for col in cols if col in player_data.columns]
+                player_data = player_data[available_cols].copy()
+                
+                # Formatera kolumnnamn
+                player_data.columns = (
+                    player_data.columns
+                    .str.replace("_", " ", regex=False)
+                    .str.title()
+                )
+                
+                # Specifika ombenämningar
+                rename_dict = {
+                    "Skater Full Name": "Full Name",
+                    "Team Abbrev": "Team",
+                    "Posistion Code": "Posistion",
+                    "Time On Ice Per Game": "TOI (sec)",
+                    "Opponent Team Abbrev": "Opponent",
+                    "Home Road": "H/A",
+                    "Plus Minus": "+/-",
+                    "Pp Points": "PP Pts",
+                    "Ev Points": "EV Pts"
+                }
+                
+                player_data = player_data.rename(columns=rename_dict)
+                
+                # Formatera datum till enbart datum (inte datetime)
+                if "Game Date" in player_data.columns:
+                    player_data["Game Date"] = player_data["Game Date"].dt.date
+
+                data_list.append(player_data)
+
+            return data_list
         
-        # Välj och formatera kolumner
-        cols = [
-            "game_date",
-            "opponent_team_abbrev",
-            "home_road",
-            "goals",
-            "assists",
-            "points",
-            "shots",
-            "plus_minus",
-            "time_on_ice_per_game",
-            "pp_points",
-            "ev_points"
-        ]
-        
-        # Filtrera bara kolumner som finns
-        available_cols = [col for col in cols if col in data.columns]
-        data_to_return = data[available_cols].copy()
-        
-        # Formatera kolumnnamn
-        data_to_return.columns = (
-            data_to_return.columns
-            .str.replace("_", " ", regex=False)
-            .str.title()
-        )
-        
-        # Specifika ombenämningar
-        rename_dict = {
-            "Time On Ice Per Game": "TOI (sec)",
-            "Opponent Team Abbrev": "Opponent",
-            "Home Road": "H/A",
-            "Plus Minus": "+/-",
-            "Pp Points": "PP Pts",
-            "Ev Points": "EV Pts"
-        }
-        
-        data_to_return = data_to_return.rename(columns=rename_dict)
-        
-        # Formatera datum till enbart datum (inte datetime)
-        if "Game Date" in data_to_return.columns:
-            data_to_return["Game Date"] = data_to_return["Game Date"].dt.date
-        
-        return data_to_return
+        else:
+            # Sortera på datum och ta n senaste
+            data = data.sort_values("game_date", ascending=False).head(n)
+            
+            # Välj och formatera kolumner
+            cols = [
+                "game_date",
+                "skater_full_name",
+                "opponent_team_abbrev",
+                "home_road",
+                "goals",
+                "assists",
+                "points",
+                "shots",
+                "plus_minus",
+                "time_on_ice_per_game",
+                "pp_points",
+                "ev_points"
+            ]
+            
+            # Filtrera bara kolumner som finns
+            available_cols = [col for col in cols if col in data.columns]
+            data_to_return = data[available_cols].copy()
+            
+            # Formatera kolumnnamn
+            data_to_return.columns = (
+                data_to_return.columns
+                .str.replace("_", " ", regex=False)
+                .str.title()
+            )
+            
+            # Specifika ombenämningar
+            rename_dict = {
+                "Skater Full Name" : "Full Name",
+                "Time On Ice Per Game": "TOI (sec)",
+                "Opponent Team Abbrev": "Opponent",
+                "Home Road": "H/A",
+                "Plus Minus": "+/-",
+                "Pp Points": "PP Pts",
+                "Ev Points": "EV Pts"
+            }
+            
+            data_to_return = data_to_return.rename(columns=rename_dict)
+            
+            # Formatera datum till enbart datum (inte datetime)
+            if "Game Date" in data_to_return.columns:
+                data_to_return["Game Date"] = data_to_return["Game Date"].dt.date
+            
+            return data_to_return
 
     def get_goalie_form(self, goalie_name, season, n=5):
         """
@@ -540,20 +608,42 @@ class AgentFunctions:
         #Have it in the format YYYY-MM-DD
         data["game_date_str"] = pd.to_datetime(data["game_date"]).dt.strftime("%Y-%m-%d")
 
-        #Which cols to pick
-        cols = ["game_date_str", "opponent_team_abbrev", "assists", "goals", 
-                "game_winning_goals", "penalty_minutes", "plus_minus"]
-        data_to_return = data.loc[:, cols].copy()
+        
+        #Check if we have two or more players with the same name
 
-        data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())       
-        data_to_return = data_to_return.rename(columns={
-            "Game Date Str": "Game Date",
-        })
-        return data_to_return   
+        if data["player_id"].nunique(dropna=False) > 1:
+            player_ids = data["player_id"].unique()
+            data_list = []
+            #split it to a pd frame for each unique player
+            for player_id in player_ids:
+                mask = (data["player_id"] == player_id)
+                player_data = data.loc[mask].copy()
+
+                #Which cols to pick
+                cols = ["game_date_str", "team_abbrev","opponent_team_abbrev", "position_code", "assists", "goals", 
+                        "game_winning_goals", "penalty_minutes", "plus_minus"]
+
+                player_data = player_data.loc[:, cols].copy()
+                player_data.columns = (player_data.columns.str.replace("_", " ", regex=False).str.title())       
+                player_data = player_data.rename(columns={
+                    "Game Date Str": "Game Date",
+                    "Posistion Code": "Posistion",
+                })
+                data_list.append(player_data)
+            return data_list
+        else:
+            #Which cols to pick
+            cols = ["game_date_str", "opponent_team_abbrev", "assists", "goals", 
+                    "game_winning_goals", "penalty_minutes", "plus_minus"]
+
+            data_to_return = data.loc[:, cols].copy()
+
+            data_to_return.columns = (data_to_return.columns.str.replace("_", " ", regex=False).str.title())       
+            data_to_return = data_to_return.rename(columns={
+                "Game Date Str": "Game Date",
+            })
+            return data_to_return   
 
 
 agentFunctions = AgentFunctions()
-
-    
-
 
