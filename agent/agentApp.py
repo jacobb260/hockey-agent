@@ -433,6 +433,24 @@ def chat_interface(question, history):
                     all_tables.append(table_md)
                     table_texts.append(tool_result.to_string(index=False, justify="left"))
                 
+                # If we get two or more players with the same name
+                elif (
+                    tool_name in ("get_player_performance_against_team", "get_player_form")
+                    and isinstance(tool_result, list)):
+                    md_tables = []
+                    text_tables = []
+                    for i, dfi in enumerate(tool_result, start=1):
+                        md_tables.append(f"**Player {i}:**\n{dfi.to_markdown(index=False)}")
+                        text_tables.append(f"Player {i}:\n{dfi.to_string(index=False)}")
+
+                    header = "There is more than one player with that name"
+
+                    table_md = header + "\n\n" + "\n\n".join(md_tables)
+                    all_tables.append(table_md)
+                    table_text = header + "\n\n" + "\n\n".join(text_tables)
+                    table_texts.append(table_text)
+
+                
                 # Handle other results (strings, etc.)
                 else:
                     all_tables.append(str(tool_result))
