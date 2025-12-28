@@ -1,6 +1,7 @@
 ## Introduction
 
-This project is an NHL-focused hockey agent designed to help users learn more about the National Hockey League. The agent allows users to ask questions about players, teams, and goaltenders, and to compare them using statistics such as points, goals, and save percentage. It is intended as an educational tool that makes NHL data easier to explore and understand.
+This project is an NHL-focused hockey agent designed to help users learn more about the National Hockey League. The agent allows users to ask questions about players, teams, and goaltenders, and to compare them using statistics such as points, goals, and save percentage. It is intended as an educational tool that makes NHL data easier to explore and understand. Here's a link to the agent:
+https://huggingface.co/spaces/plays1/hockey-agent 
 
 ## Data Source and Storage
 
