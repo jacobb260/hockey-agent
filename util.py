@@ -109,10 +109,10 @@ def fetch_player_form_for_season(season_id: str) -> pd.DataFrame:
     
     return pd.concat(all_months, ignore_index=True)
 
-# URL för målvakter
-GOALIE_GAME_LOG_URL = "https://api.nhle.com/stats/rest/en/goalie/summary"
 
 def fetch_goalie_form_for_season(season_id: str) -> pd.DataFrame:
+    # URL för målvakter
+    GOALIE_GAME_LOG_URL = "https://api.nhle.com/stats/rest/en/goalie/summary"
     params = {
         "isGame": "true",  
         "cayenneExp": f"gameTypeId=2 and seasonId={season_id}",
@@ -133,4 +133,55 @@ def fetch_goalie_form_for_season(season_id: str) -> pd.DataFrame:
     if "seasonId" not in df.columns:
         df["seasonId"] = season_id
     
+    return df
+
+def fetch_player_stats(season_id: str) -> pd.DataFrame:
+    PLAYER_GAME_LOG_URL = "https://api.nhle.com/stats/rest/en/skater/summary"
+    cayenne = f"gameTypeId=2 and seasonId={season_id}"
+
+    base_params = {
+        "isAggregate": "false",
+        "isGame": "false",
+        "start": 0,
+        "limit": -1,
+        "cayenneExp": cayenne,
+    }
+
+    resp = requests.get(PLAYER_GAME_LOG_URL, params=base_params, timeout=20)
+    resp.raise_for_status()
+    data = resp.json()["data"]
+    return pd.DataFrame(data)
+
+
+def fetch_goalies_for_season(season_id: str) -> pd.DataFrame:
+    GOALIE_URL = "https://api.nhle.com/stats/rest/en/goalie/summary"
+    params = {
+        "cayenneExp": f"gameTypeId=2 and seasonId={season_id}",
+        "limit": -1
+    }
+
+    resp = requests.get(GOALIE_URL, params=params, timeout=20)
+    resp.raise_for_status()
+
+    data = resp.json()["data"]
+    df = pd.DataFrame(data)
+
+    df["seasonId"] = season_id  # säkerställ att den finns
+    return df
+
+
+def fetch_team_for_season(season_id: str) -> pd.DataFrame:
+    URL = "https://api.nhle.com/stats/rest/en/team/summary"
+    params = {
+        "cayenneExp": f"gameTypeId=2 and seasonId={season_id}",
+        "limit": -1
+    }
+
+    resp = requests.get(URL, params=params, timeout=20)
+    resp.raise_for_status()
+
+    data = resp.json()["data"]
+    df = pd.DataFrame(data)
+
+    df["seasonId"] = season_id  # säkerställ att den finns
     return df
