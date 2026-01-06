@@ -5,7 +5,7 @@ https://huggingface.co/spaces/plays1/hockey-agent
 
 ## Data Source and Storage
 
-The agent retrieves its data from the NHL API, which provides up-to-date and detailed hockey statistics. More information about the API can be found here:
+The agent retrieves its data from the NHL API, which provides up-to-date and detailed hockey statistics. The data is updated daily and the agent has access to data from 2000 onward. More information about the API can be found here:
 https://github.com/Zmalski/NHL-API-Reference
 
 For data storage, Hopsworks is used to manage and persist the collected information efficiently.
