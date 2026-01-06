@@ -21,6 +21,7 @@ class AgentFunctions:
         self.fs = self.project.get_feature_store()
         self.games_fg = None
         self.player_season_stats_fg = None
+        self.teams_fg = None
         
 
     def get_player_overview(self, player_name, season):
@@ -66,10 +67,12 @@ class AgentFunctions:
         """
         Fetches all available stats for a team during a given season.
         """
-        teams_fg = self.fs.get_feature_group(name='teams', version=1)
-        data = teams_fg.filter(
-            (teams_fg.team_full_name == teamName) &
-            (teams_fg.season_id == season)
+        if self.teams_fg is None:
+            self.teams_fg = self.fs.get_feature_group(name='teams', version=1)
+
+        data = self.teams_fg.filter(
+            (self.teams_fg.team_full_name == teamName) &
+            (self.teams_fg.season_id == season)
         ).read()
         
         # The most important columns for a team overview.
@@ -150,13 +153,15 @@ class AgentFunctions:
         Returns the top n teams for a season based on the selected metric.
         Example metrics: points, wins, goals_for, power_play_pct.
         """
-        teams_fg = self.fs.get_feature_group(
-            name="teams",
-            version=1
-        )
+        if self.teams_fg is None:
 
-        data = teams_fg.filter(
-            teams_fg.season_id == season
+            self.teams_fg = self.fs.get_feature_group(
+                name="teams",
+                version=1
+            )
+
+        data = self.teams_fg.filter(
+            self.teams_fg.season_id == season
         ).read()
 
         data = data[data[metric].notna()]

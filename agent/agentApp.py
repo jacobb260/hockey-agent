@@ -297,7 +297,7 @@ TOOLS_DESCRIPTION = """
 You can use the following tools for answer questions related to the NHL
 1. get_player_overview:
    Use when the user asks for season overview of a player. For example when the user asks "How good is Jesper Fast this season"
-   Or when the user want a comparison of two players
+   Or when the user want a comparison of player's season overview
    Parameters:
    - player_name: The full (first name and last name) name of the player
    - season: Which season. The format is YYYYYYYY, 20252026 for example
@@ -354,7 +354,8 @@ You can use the following tools for answer questions related to the NHL
     - n: number of recent games to analyze (default: 5)
 10. get_game_results:
     Use when the user asks about the game results between two teams for a season
-    Example: "Give me the results between New York Rangers and New York Islanders the 18/19 season"
+    Example: "Give me the results between New York Rangers and New York Islanders the 18/19 season" or 
+    "How has Montreal performed against New York Rangers this season"
     Parameters:
     - team: The full name of the team
     - opponent: The full name of the opponent team
@@ -443,7 +444,7 @@ def chat_interface(question, history):
                         md_tables.append(f"**Player {i}:**\n{dfi.to_markdown(index=False)}")
                         text_tables.append(f"Player {i}:\n{dfi.to_string(index=False)}")
 
-                    header = "There is more than one player with that name"
+                    header = "There are more than one player with that name"
 
                     table_md = header + "\n\n" + "\n\n".join(md_tables)
                     all_tables.append(table_md)

@@ -29,3 +29,43 @@ Fetch information about specific games
 Analyze and assess goaltender performance
 
 All results are presented in markdown-formatted tables, giving users a clear and structured overview that makes comparisons and statistics easy to read and understand.
+
+## Setup
+
+This project uses Conda for environment management.
+
+### Create Conda environment
+
+```bash
+conda env create -f environment.yml
+conda activate hockey-agent
+```
+
+### Environment variables
+
+Set the following environment variables:
+
+```text
+GOOGLE_API_KEY=your_google_api_key
+HOPSWORKS_API_KEY=your_hopsworks_api_key
+HOPSWORKS_PROJECT=your_hopsworks_project
+HOPSWORKS_HOST=your_hopsworks_host
+```
+
+These can be set in a `.env` file or exported in your shell.
+
+## Run the agent locally
+
+To run the agent locally on your own computer:
+
+```bash
+cd hockey-agent/agent
+python agentApp.py
+```
+
+The UI can be accessed at:
+
+```
+http://localhost:7860/
+```
+
