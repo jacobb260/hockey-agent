@@ -39,5 +39,4 @@ class Settings:
         return value
 
 
-# Global instans som du kan importera överallt
 settings = Settings()

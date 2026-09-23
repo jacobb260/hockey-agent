@@ -26,7 +26,6 @@ jobs:
 
       - name: Run notebook
         env:
-          # Sätt dessa som GitHub Secrets (se steg 2)
           HOPSWORKS_PROJECT: ${{ secrets.HOPSWORKS_PROJECT }}
           HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
           HOPSWORKS_HOST: ${{ secrets.HOPSWORKS_HOST }}
